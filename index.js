@@ -1,4 +1,4 @@
-var _LOG = true;
+var _LOG = false;
 function log(...params) {
     if (!_LOG) return;
     console.info.apply(null, params);
