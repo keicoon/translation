@@ -1,21 +1,37 @@
 <!DOCTYPE html>
-<html style="min-width:300px;">
+<html style="min-width:300px;min-height:450px;">
 
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="jquery.mobile-1.4.5.min.css">
+    <script src="jquery-1.11.1.min.js"></script>
+    <script src="jquery.mobile-1.4.5.min.js"></script>
     <script src="index.js"></script>
 </head>
 
 <body>
-    <div id="main">
-        <div class='secert'>
-            client_id : <input type="text" id="client_id" /><br />
-            client_secret : <input type="password" id="client_secret" /><br />
-        </div>
-        <div class='content'>
+
+    <div data-role="page" id="main">
+        <div data-role="content">
             source => <input type="text" id="source"></input><br />
             result => <text id="target"></text><br />
-            <input type="button" id="T" value="T" />
+            <input type="button" id="T" value="Translate"></input>
+            <a href="#setting">setting</a>
+        </div>
+    </div>
+
+    <div data-role="page" id="setting">
+        <div data-role="content">
+            client_id : <input type="text" id="client_id" /><br />
+            client_secret : <input type="password" id="client_secret" /><br />
+            google_api : <input type="password" id="google_api" /><br />
+            <div>
+                <input type="radio" name="api" id="google" checked>
+                <label for="google">google</label>
+                <input type="radio" name="api" id="papago">
+                <label for="papago">papago</label>
+            </div>
+            <a href="#main">back</a>
         </div>
     </div>
 </body>

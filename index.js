@@ -4,76 +4,110 @@ function log(...params) {
     console.info.apply(null, params);
 }
 function IsValid() {
-    return (document.getElementById("client_id").value
-        && document.getElementById("client_secret").value
-        && document.getElementById("source").value)
+    function NotEmpty(text) {
+        return text && text != "undefined"
+    }
+    return (document.getElementById("source").value
+        && (
+            (NotEmpty(document.getElementById("client_id").value) && NotEmpty(document.getElementById("client_secret").value))
+            || NotEmpty(document.getElementById("google_api").value)
+        )
+    );
 }
-function GetSecert() {
+function GetPapagoSecert() {
     return {
         "X-Naver-Client-Id": document.getElementById("client_id").value,
         "X-Naver-Client-Secret": document.getElementById("client_secret").value
     };
 }
+function GetGoogleSecret() {
+    return document.getElementById("google_api").value;
+}
 function GetRegion(text) {
     if (65 <= text.charCodeAt(0) && text.charCodeAt(0) <= 122) {
-        log(`Region => en to ko`);
         return { source: 'en', target: 'ko' };
     } else {
-        log(`Region => ko to en`);
         return { source: 'ko', target: 'en' }; // @TODO:
     }
 }
-function RequestAPI(text) {
+function RequestAPI_papago(text) {
     return new Promise((resolve, reject) => {
-
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", 'https://openapi.naver.com/v1/papago/n2mt', true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.setRequestHeader()
-        var myHeaders = new Headers(Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, GetSecert()));
+        xhr.open("POST", 'https://openapi.naver.com/v1/papago/n2mt');
+        var myHeader = Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, GetPapagoSecert());
+        for (var key in myHeader) {
+            xhr.setRequestHeader(key, myHeader[key]);
+        }
 
-        xhr.onreadystatechange = function() { // Call a function when the state changes.
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                // Request finished. Do processing here.
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                if (xhr.status === 200) {
+                    resolve(xhr.responseText);
+                } else {
+                    if (xhr.status === 500) {
+                        console.error(xhr.responseText)
+                    }
+                    reject(xhr.status);
+                }
             }
         }
-        xhr.send("foo=bar&lorem=ipsum");
 
-        var formData = new FormData();
         var myBody = Object.assign(GetRegion(text), { 'text': text });
+        var data = [];
         for (var key in myBody) {
-            formData.append(key, myBody[key]);
+            data.push(`${key}=${myBody[key]}`);
         }
+        data = data.join('&');
 
-        var request = new Request('https://openapi.naver.com/v1/papago/n2mt', {
-            method: 'POST',
-            headers: myHeaders,
-            body: formData
+        log(`request => ${data}`);
+
+        xhr.send(data);
+    })
+}
+function RequestAPI_google(text) {
+    return new Promise((resolve, reject) => {
+        var apiKey = GetGoogleSecret();
+        var { source, target } = GetRegion(text);
+        var apiurl = "https://www.googleapis.com/language/translate/v2?key=" + apiKey + "&source=" + source + "&target=" + target + "&q=";
+
+        $.ajax({
+            url: apiurl + encodeURIComponent(text),
+            dataType: 'jsonp',
+            success: function (data) {
+                var result = data.data.translations[0].translatedText;
+                resolve(result)
+            },
+            error: function (err) {
+                reject(err)
+            }
         });
-        console.log('@', request)
-        return reject();
-        // fetch(request)
-        //     .then(response => {
-        //         if (response.statusCode == 200) {
-        //             resolve(response.text());
-        //         } else {
-        //             reject(response.statusCode);
-        //         }
-        //     })
-        //     .catch(e => {
-        //         reject(e);
-        //     });
     })
 }
 function translation() {
     if (IsValid() == false) return console.error("Input your infomations");
 
     var text = document.getElementById("source").value;
-    log(`translation => ${text} => ...`);
-    RequestAPI(text)
+
+    var elements = document.getElementsByName("api");
+    var api_type = 'google';
+    for (var i = 0; i < elements.length; i++) {
+        if (elements[i].checked) {
+            api_type = elements[i].id;
+            break;
+        }
+    }
+
+    var api = {
+        "google": RequestAPI_google,
+        "papago": RequestAPI_papago
+    }[api_type];
+
+    log(`translation => ${text} => by ${api_type}`);
+
+    api(text)
         .then((result) => {
             log(`translation => ${text} => ${result}`);
-            document.getElementById("target").value = result;
+            document.getElementById("target").innerText = result;
         }).catch((e) => {
             console.error(e);
         })
@@ -82,12 +116,17 @@ function translation() {
 function register_event() {
     document.getElementById("client_id").addEventListener("change", () => {
         if (event.target.value) {
-            chrome.storage.sync.set({ client_id: event.target.value });
+            chrome.storage.local.set({ client_id: event.target.value || "" });
         }
     })
     document.getElementById("client_secret").addEventListener("change", () => {
         if (event.target.value) {
-            chrome.storage.sync.set({ client_secret: event.target.value });
+            chrome.storage.local.set({ client_secret: event.target.value || "" });
+        }
+    })
+    document.getElementById("google_api").addEventListener("change", () => {
+        if (event.target.value) {
+            chrome.storage.local.set({ google_api: event.target.value || "" });
         }
     })
     document.getElementById("T").addEventListener("click", translation);
@@ -96,12 +135,12 @@ function register_event() {
 document.addEventListener('DOMContentLoaded', function () {
     register_event();
 
-    chrome.storage.sync.get(stored => {
-        var { client_id, client_secret, content } = stored;
-        log(`${client_id} ${client_secret} ${content}`);
+    chrome.storage.local.get(stored => {
+        var { client_id, client_secret, google_api, content } = stored;
 
         document.getElementById("client_id").value = client_id;
         document.getElementById("client_secret").value = client_secret;
+        document.getElementById("google_api").value = google_api;
 
         if (content) {
             document.getElementById("source").value = content;

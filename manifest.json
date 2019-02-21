@@ -5,12 +5,13 @@
     "manifest_version": 2,
     "browser_action": {
         "default_popup": "main.html",
-        "default_icon": "default_icon.jpg"
+        "default_icon": "default_icon.png"
     },
     "commands": {
-        "_execute_browser_action": {
+        "toggle-feature-foo": {
             "suggested_key": {
-                "default": "Alt+T"
+                "default": "Alt+T",
+                "mac": "Command+T"
             },
             "description": "HotKey"
         }
@@ -18,8 +19,8 @@
     "permissions": [
         "storage",
         "activeTab",
-        "http://openapi.naver.com/v1/papago/n2mt",
-        "https://openapi.naver.com/v1/papago/n2mt"
+        "https://openapi.naver.com/v1/papago/n2mt",
+        "https://www.googleapis.com/language/translate/v2"
     ],
     "content_scripts": [
         {
@@ -30,5 +31,6 @@
                 "content.js"
             ]
         }
-    ]
+    ],
+    "content_security_policy": "script-src 'self' https://www.googleapis.com; object-src 'self'"
 }

@@ -1,4 +1,12 @@
 document.onmouseup = document.onkeyup = document.onselectionchange = function () {
-    var content = window.getSelection().toString();
-    chrome.storage.sync.set({ content });
+    try {
+        var selected = window.getSelection().toString();
+
+        if (selected && selected.length < 15) {
+            console.log('set', selected)
+            chrome.storage.local.set({ content: selected });
+        }
+    } catch (e) {
+        alert(e);
+    }
 };
