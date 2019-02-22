@@ -1,6 +1,6 @@
 {
     "name": "Translation Extension",
-    "description": "so ea-sy",
+    "description": "Alt + T",
     "version": "1.0",
     "manifest_version": 2,
     "browser_action": {
