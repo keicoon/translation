@@ -108,6 +108,10 @@ function translation() {
         .then((result) => {
             log(`translation => ${text} => ${result}`);
             document.getElementById("target").innerText = result;
+
+            _history.unshift(`${text}:${result}`);
+            if (_history.length > 10) _history.pop();
+            chrome.storage.local.set({ history: _history });
         }).catch((e) => {
             console.error(e);
         })
@@ -132,15 +136,20 @@ function register_event() {
     document.getElementById("T").addEventListener("click", translation);
 
 }
+var _history = [];
 document.addEventListener('DOMContentLoaded', function () {
     register_event();
 
     chrome.storage.local.get(stored => {
-        var { client_id, client_secret, google_api, content } = stored;
+        var { client_id, client_secret, google_api, api_type, content, history } = stored;
 
         document.getElementById("client_id").value = client_id;
         document.getElementById("client_secret").value = client_secret;
         document.getElementById("google_api").value = google_api;
+        _history = history || [];
+        update_history();
+
+        radio_event(api_type);
 
         if (content) {
             document.getElementById("source").value = content;
@@ -148,3 +157,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     })
 }, false);
+
+function update_history() {
+    var div = document.getElementById("history_container");
+    let html = `<table>`;
+    for (let i = 0; i < _history.length; i++) {
+        var words = _history[i].split(":");
+        html += `<tr><th width=120>${words[0]}</th><th width=120>${words[1]}</th></tr>`;
+    }
+    html += '</table>';
+
+    div.innerHTML = html;
+}
+
+function radio_event(api_type) {
+    var btn_event = (e) => {
+        e = e || window.event;
+        var src = e.target || e.srcElement;
+        chrome.storage.local.set({ api_type: src.id });
+    }
+    var elements = document.getElementsByName("api");
+    for (var i = 0; i < elements.length; i++) {
+        var elem = elements[i];
+        if (api_type) {
+            elem.checked = (elem.id == api_type);
+        }
+        elem.onclick = btn_event;
+    }
+}

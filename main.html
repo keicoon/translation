@@ -13,9 +13,10 @@
 
     <div data-role="page" id="main">
         <div data-role="content">
-            source => <input type="text" id="source"></input><br />
+            source => <input type="text" id="source" autofocus></input><br />
             result => <text id="target"></text><br />
             <input type="button" id="T" value="Translate"></input>
+            <a href="#history">history</a> <br />
             <a href="#setting">setting</a>
         </div>
     </div>
@@ -34,6 +35,15 @@
             <a href="#main">back</a>
         </div>
     </div>
+
+    <div data-role="page" id="history">
+        <div data-role="content">
+            <div id="history_container">
+            </div>
+            <a href="#main">back</a>
+        </div>
+    </div>
+
 </body>
 
 </html>
