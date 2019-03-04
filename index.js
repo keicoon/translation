@@ -135,6 +135,11 @@ function register_event() {
     })
     document.getElementById("T").addEventListener("click", translation);
 
+    document.getElementById("source").addEventListener('keypress', (e) => {
+        if (e.keyCode == 13) { // KEYCODE_ENTER is '13'
+            translation()
+        }
+    })
 }
 var _history = [];
 document.addEventListener('DOMContentLoaded', function () {
